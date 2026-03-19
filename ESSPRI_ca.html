@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Calculadora ESSPRI (Sjögren’s Patient Reported Index)</title>
+
+<style>
+body {
+  background-color: #87CEEB;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 40px 0;
+}
+
+.container {
+  background-color: #fffde7;
+  width: 650px;
+  max-width: 95%;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  margin: 0 auto;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;   /* centers the whole block */
+  position: relative;
+  color: #3366cc;
+  margin-bottom: 25px;
+  border: 2px solid #3366cc;
+  border-radius: 8px;
+  background-color: #e6f0ff;
+  padding: 15px 20px;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.logo {
+  position: absolute;
+  left: 20px;   /* keeps logo at left */
+  height: 40px;
+}
+
+.section {
+  margin-bottom: 25px;
+}
+
+.label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+input[type="range"] {
+  width: 100%;
+}
+
+.value {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: right;
+  margin-bottom: 5px;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.scale button {
+  flex: 1;
+  margin: 2px;
+  padding: 6px 0;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
+
+.scale button.active {
+  background-color: #3366cc;
+  color: white;
+  font-weight: bold;
+}
+
+.result {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+.badge {
+  padding: 10px 15px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.low { background-color: #4CAF50; color: white; }
+.high { background-color: #F44336; color: white; }
+
+button.main {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-right: 10px;
+  background-color: #3366cc;
+  color: white;
+}
+
+button.main:hover {
+  opacity: 0.85;
+}
+
+.reference {
+  font-size: 12px;
+  margin-top: 30px;
+  color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="title">
+  <img src="LogOM5.png" class="logo">
+  ESSPRI (Sjögren’s Patient Reported Index)
+  </div>
+
+  <!-- Function to create one section -->
+  <script>
+  function createSection(id, labelText) {
+    document.write(`
+      <div class="section">
+        <div class="label">${labelText} (0–10)</div>
+        <div class="value" id="${id}_val">0</div>
+        <input type="range" min="0" max="10" value="0" id="${id}" oninput="updateSlider('${id}')">
+        <div class="scale" id="${id}_scale">
+          ${[...Array(11).keys()].map(n =>
+            `<button onclick="setValue('${id}', ${n})">${n}</button>`
+          ).join('')}
+        </div>
+      </div>
+    `);
+  }
+  </script>
+
+  <script>
+    createSection("sequetat", "Sequetat");
+    createSection("fatiga", "Fatiga");
+    createSection("dolor", "Dolor");
+  </script>
+
+  <button class="main" onclick="calculate()">Calcular ESSPRI</button>
+  <button class="main" onclick="resetForm()">Reset</button>
+
+  <div class="result" id="result"></div>
+  <div id="interpretation"></div>
+
+  <div class="reference">
+    Seror R et al. Development of the EULAR Sjögren’s Syndrome Patient Reported Index (ESSPRI). 
+    Ann Rheum Dis. 2011;70:968–972.
+  </div>
+
+</div>
+
+<script>
+
+function updateSlider(id) {
+  let value = document.getElementById(id).value;
+  document.getElementById(id + "_val").innerText = value;
+  highlightButtons(id, value);
+}
+
+function setValue(id, value) {
+  document.getElementById(id).value = value;
+  document.getElementById(id + "_val").innerText = value;
+  highlightButtons(id, value);
+}
+
+function highlightButtons(id, value) {
+  let buttons = document.querySelectorAll(`#${id}_scale button`);
+  buttons.forEach(btn => btn.classList.remove("active"));
+  buttons[value].classList.add("active");
+}
+
+function calculate() {
+  let d = parseFloat(document.getElementById("sequetat").value);
+  let f = parseFloat(document.getElementById("fatiga").value);
+  let p = parseFloat(document.getElementById("dolor").value);
+
+  let score = ((d + f + p) / 3).toFixed(2);
+
+  document.getElementById("result").innerHTML = "ESSPRI Score: " + score;
+
+  let text = "";
+  let style = "";
+
+  if (score < 5) {
+    text = "Estat acceptable de símptomes";
+    style = "low";
+  } else {
+    text = "Alta intensitat de símptomes";
+    style = "high";
+  }
+
+  document.getElementById("interpretation").innerHTML =
+    `<div class="badge ${style}">${text}</div>`;
+}
+
+function resetForm() {
+  ["sequetat","fatiga","dolor"].forEach(id => {
+    document.getElementById(id).value = 0;
+    document.getElementById(id + "_val").innerText = 0;
+    highlightButtons(id, 0);
+  });
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("interpretation").innerHTML = "";
+}
+
+// Initialize buttons
+window.onload = function() {
+  ["sequetat","fatiga","dolor"].forEach(id => highlightButtons(id, 0));
+}
+
+</script>
+
+</body>
+</html>
